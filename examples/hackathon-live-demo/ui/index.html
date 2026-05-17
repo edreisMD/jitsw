@@ -280,25 +280,46 @@
 
     .alert-badge {
       position: absolute;
-      top: -5px;
-      right: -5px;
-      min-width: 20px;
-      height: 20px;
+      top: -2px;
+      right: -2px;
+      width: 14px;
+      height: 14px;
       border-radius: 999px;
       border: 2px solid var(--paper);
       background: var(--blue);
-      color: var(--paper);
-      display: grid;
-      place-items: center;
-      padding: 0 5px;
-      font-size: 11px;
-      line-height: 1;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
+      display: block;
     }
 
     .alert-badge[hidden] {
       display: none;
+    }
+
+    .alert-badge.working,
+    .history-dot.working {
+      background: var(--gold);
+      animation: pulse-dot 900ms ease-in-out infinite;
+    }
+
+    .alert-badge.ready,
+    .history-dot.ready {
+      background: var(--blue);
+    }
+
+    .history-dot.idle {
+      background: var(--muted-soft);
+    }
+
+    @keyframes pulse-dot {
+      0%,
+      100% {
+        opacity: 0.42;
+        transform: scale(0.78);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     .reply-mark {
@@ -399,6 +420,12 @@
       place-items: center;
       color: #6c6862;
       font-size: 22px;
+    }
+
+    .drawer-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
     }
 
     .close-button:hover {
@@ -692,8 +719,11 @@
       <div class="drawer-backdrop" id="drawerBackdrop"></div>
       <aside class="drawer" id="drawer" aria-label="History">
         <div class="drawer-head">
-          <div class="drawer-title">Recents</div>
-          <button class="close-button" id="closeDrawer" aria-label="Close history">x</button>
+          <div class="drawer-title">Threads</div>
+          <div class="drawer-actions">
+            <button class="close-button" id="newThread" aria-label="New thread">+</button>
+            <button class="close-button" id="closeDrawer" aria-label="Close history">x</button>
+          </div>
         </div>
         <div class="history" id="history"></div>
       </aside>
@@ -737,6 +767,13 @@
     let selectedEventId = "";
     let pinnedSelection = false;
     let latestMessages = [];
+    const THREADS_STORAGE_KEY = "jitswThreads:v2";
+    const EVENT_THREADS_STORAGE_KEY = "jitswEventThreads:v2";
+    const ACTIVE_THREAD_STORAGE_KEY = "jitswActiveThread:v2";
+    const NEW_THREAD_TITLE = "New UI thread";
+    let threads = loadStoredJson(THREADS_STORAGE_KEY, []);
+    let eventThreads = loadStoredJson(EVENT_THREADS_STORAGE_KEY, {});
+    let activeThreadId = window.localStorage.getItem(ACTIVE_THREAD_STORAGE_KEY) || "";
 
     const drawer = document.getElementById("drawer");
     const drawerBackdrop = document.getElementById("drawerBackdrop");
@@ -756,6 +793,154 @@
       rejected: "Rejected.",
       changes: "Request changes."
     };
+
+    function loadStoredJson(key, fallback) {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(key) || "");
+        if (Array.isArray(fallback)) return Array.isArray(parsed) ? parsed : fallback;
+        if (!Array.isArray(fallback) && Array.isArray(parsed)) return fallback;
+        return parsed && typeof parsed === "object" ? parsed : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveThreads() {
+      threads = threads
+        .filter((thread) => thread && thread.id)
+        .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+      window.localStorage.setItem(THREADS_STORAGE_KEY, JSON.stringify(threads));
+      if (activeThreadId) window.localStorage.setItem(ACTIVE_THREAD_STORAGE_KEY, activeThreadId);
+      else window.localStorage.removeItem(ACTIVE_THREAD_STORAGE_KEY);
+    }
+
+    function saveEventThreads() {
+      window.localStorage.setItem(EVENT_THREADS_STORAGE_KEY, JSON.stringify(eventThreads));
+    }
+
+    function getActiveThread() {
+      return threads.find((thread) => thread.id === activeThreadId) || null;
+    }
+
+    function titleFromPrompt(text) {
+      const clean = String(text || "").replace(/\s+/g, " ").trim();
+      if (!clean) return NEW_THREAD_TITLE;
+      return clean.length > 58 ? `${clean.slice(0, 55)}...` : clean;
+    }
+
+    function createUiThread(options = {}) {
+      const now = Date.now();
+      const thread = {
+        id: `thread-${now}-${Math.random().toString(16).slice(2)}`,
+        title: options.title || NEW_THREAD_TITLE,
+        status: options.status || "idle",
+        createdAt: options.createdAt || now,
+        updatedAt: options.updatedAt || now,
+        eventId: options.eventId || ""
+      };
+      threads.unshift(thread);
+      activeThreadId = thread.id;
+      selectedEventId = thread.eventId || "";
+      pinnedSelection = false;
+      saveThreads();
+      return thread;
+    }
+
+    function setActiveThread(id) {
+      activeThreadId = id || "";
+      const thread = getActiveThread();
+      selectedEventId = thread?.eventId || "";
+      pinnedSelection = !!selectedEventId;
+      saveThreads();
+    }
+
+    function messageTimestamp(item) {
+      return Number(item?.origin_server_ts || 0) || Date.now();
+    }
+
+    function rememberThreadEvent(thread, item) {
+      if (!thread || !item?.event_id) return false;
+      thread.eventId = item.event_id;
+      thread.status = "ready";
+      thread.updatedAt = messageTimestamp(item);
+      if (!thread.title || thread.title === NEW_THREAD_TITLE) thread.title = messageTitle(item);
+      delete thread.workingSince;
+      eventThreads[item.event_id] = thread.id;
+      return true;
+    }
+
+    function syncThreadsFromTimeline(visible) {
+      let changed = false;
+
+      if (threads.length && !getActiveThread()) {
+        activeThreadId = threads[0].id;
+        changed = true;
+      }
+
+      for (const thread of threads) {
+        if (thread.eventId && eventThreads[thread.eventId] !== thread.id) {
+          eventThreads[thread.eventId] = thread.id;
+          changed = true;
+        }
+      }
+
+      if (!threads.length && visible[0]) {
+        const item = visible[0];
+        createUiThread({
+          title: messageTitle(item),
+          status: "ready",
+          eventId: item.event_id,
+          createdAt: messageTimestamp(item),
+          updatedAt: messageTimestamp(item)
+        });
+        if (item.event_id) eventThreads[item.event_id] = activeThreadId;
+        changed = true;
+      }
+
+      const active = getActiveThread();
+      if (active?.status === "working") {
+        const since = Number(active.workingSince || active.updatedAt || 0);
+        const ready = visible.find((item) => {
+          if (!item?.event_id || item.event_id === active.eventId) return false;
+          const ts = messageTimestamp(item);
+          return !since || ts >= since - 1000;
+        });
+        if (ready) changed = rememberThreadEvent(active, ready) || changed;
+      }
+
+      const knownThreadIds = new Set(threads.map((thread) => thread.id));
+      for (const [eventId, threadId] of Object.entries(eventThreads)) {
+        if (!knownThreadIds.has(threadId)) {
+          delete eventThreads[eventId];
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        saveThreads();
+        saveEventThreads();
+      }
+    }
+
+    function selectedThreadSurface(visible) {
+      const active = getActiveThread();
+      if (!active) return null;
+      const selected = active.eventId ? visible.find((item) => item.event_id === active.eventId) : null;
+      selectedEventId = selected?.event_id || "";
+      return selected || null;
+    }
+
+    function renderThreadStatus() {
+      const active = getActiveThread();
+      alertBadge.className = "alert-badge";
+      alertBadge.textContent = "";
+      if (!active || active.status === "idle" || (!active.eventId && active.status !== "working")) {
+        alertBadge.hidden = true;
+        return;
+      }
+      alertBadge.hidden = false;
+      alertBadge.classList.add(active.status === "working" ? "working" : "ready");
+    }
 
     function showToast(text) {
       toast.textContent = text;
@@ -973,32 +1158,30 @@
       return body || "Message";
     }
 
-    function renderHistory(messages) {
-      const visible = (messages || []).filter((item) => item.a2ui);
-      const alertCount = visible.length;
-      alertBadge.hidden = alertCount === 0;
-      alertBadge.textContent = alertCount > 9 ? "9+" : String(alertCount);
-      history.replaceChildren(...visible.map((item) => {
-        const meta = senderMeta(item.sender);
+    function renderHistory(visibleMessages = []) {
+      renderThreadStatus();
+      const messageByEvent = new Map((visibleMessages || []).map((item) => [item.event_id, item]));
+      history.replaceChildren(...threads.map((thread) => {
+        const item = thread.eventId ? messageByEvent.get(thread.eventId) : null;
         const button = document.createElement("button");
-        button.className = `history-item ${item.event_id === selectedEventId ? "active" : ""}`;
+        button.className = `history-item ${thread.id === activeThreadId ? "active" : ""}`;
         button.innerHTML = `
-          <span class="history-dot ${meta.agent ? "" : "human"}"></span>
+          <span class="history-dot ${thread.status || "idle"}"></span>
           <span class="history-copy">
             <span class="history-title"></span>
             <span class="history-meta"></span>
           </span>
         `;
-        const time = item.origin_server_ts
-          ? new Date(item.origin_server_ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+        const time = thread.updatedAt
+          ? new Date(thread.updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
           : "now";
-        button.querySelector(".history-title").textContent = messageTitle(item);
-        button.querySelector(".history-meta").textContent = `${meta.name} · ${time}`;
+        const status = thread.status === "working" ? "working" : thread.eventId ? "ready" : "new";
+        button.querySelector(".history-title").textContent = thread.title || (item ? messageTitle(item) : NEW_THREAD_TITLE);
+        button.querySelector(".history-meta").textContent = `GBrain - OpenClaw · ${status} · ${time}`;
         button.addEventListener("click", () => {
-          selectedEventId = item.event_id;
-          pinnedSelection = true;
-          renderSurface(item);
-          renderHistory(latestMessages);
+          setActiveThread(thread.id);
+          renderSurface(item || null);
+          renderHistory(visibleMessages);
           setDrawer(false);
         });
         return button;
@@ -1009,10 +1192,8 @@
       const timeline = await api("/api/messages");
       latestMessages = timeline.messages || [];
       const visible = latestMessages.filter((item) => item.a2ui);
-      const newestAgentSurface = visible[0];
-      const pinned = pinnedSelection ? visible.find((item) => item.event_id === selectedEventId) : null;
-      const selected = pinned || newestAgentSurface || visible[0] || null;
-      selectedEventId = selected?.event_id || "";
+      syncThreadsFromTimeline(visible);
+      const selected = selectedThreadSurface(visible);
       renderSurface(selected);
       renderHistory(visible);
       return timeline;
@@ -1021,17 +1202,37 @@
     async function sendChatMessage(text) {
       setComposer(false);
       pinnedSelection = false;
+      let thread = getActiveThread();
+      if (!thread) thread = createUiThread({ title: titleFromPrompt(text) });
+      if (!thread.title || thread.title === NEW_THREAD_TITLE) thread.title = titleFromPrompt(text);
+      thread.status = "working";
+      thread.workingSince = Date.now();
+      thread.updatedAt = thread.workingSince;
+      saveThreads();
+      renderHistory(latestMessages.filter((item) => item.a2ui));
       showToast("Sending");
       try {
         await api("/api/chat", {
           method: "POST",
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, threadId: thread.id, threadTitle: thread.title })
         });
         showToast("Submitted to Matrix / saved to GBrain");
         pollMatrixTimeline();
       } catch {
+        thread.status = thread.eventId ? "ready" : "idle";
+        delete thread.workingSince;
+        saveThreads();
+        renderHistory(latestMessages.filter((item) => item.a2ui));
         showToast("Backend unavailable");
       }
+    }
+
+    function startNewThread() {
+      createUiThread();
+      renderSurface(null);
+      renderHistory(latestMessages.filter((item) => item.a2ui));
+      setDrawer(false);
+      setComposer(true);
     }
 
     async function pollMatrixTimeline(iterations = 12) {
@@ -1122,6 +1323,7 @@
 
     document.getElementById("openDrawer").addEventListener("click", () => setDrawer(true));
     document.getElementById("closeDrawer").addEventListener("click", () => setDrawer(false));
+    document.getElementById("newThread").addEventListener("click", startNewThread);
     drawerBackdrop.addEventListener("click", () => setDrawer(false));
     document.getElementById("openComposer").addEventListener("click", () => setComposer(true));
     composerBackdrop.addEventListener("click", () => setComposer(false));

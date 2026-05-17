@@ -390,10 +390,12 @@ async function sendHumanMatrixMessage(body: string) {
   );
 }
 
-function buildJitswChatPrompt(text: string) {
+function buildJitswChatPrompt(text: string, threadId?: string, threadTitle?: string) {
   return [
+    `JITSW thread: ${threadTitle || threadId || 'active-ui-thread'}`,
     `JITSW user request: ${text}`,
     '',
+    'If this is feedback on a previous UI, revise that UI and send the complete updated UI for the same thread.',
     'Respond only with one complete compact fenced JSON A2UI v0.9 object.',
     'Use this shape: {"a2ui":"0.9","surface":{...}}.',
     'Use only supported components: Column, Row, Card, Text, Button.',
@@ -727,12 +729,14 @@ async function handleApproval(request: Request, user: AuthUser | null) {
 }
 
 async function handleChat(request: Request, user: AuthUser | null) {
-  const input = await readJson<{ message?: string; command?: string }>(request);
+  const input = await readJson<{ message?: string; command?: string; threadId?: string; threadTitle?: string }>(request);
   const text = (input.message ?? input.command ?? '').trim();
   if (!text) return json({ error: 'message is required' }, { status: 400 });
 
+  const threadId = String(input.threadId ?? '').trim().slice(0, 120);
+  const threadTitle = String(input.threadTitle ?? '').trim().slice(0, 120);
   const prefix = user?.email ? `${user.email}: ` : '';
-  const matrix = await sendHumanMatrixMessage(`${prefix}${buildJitswChatPrompt(text)}`);
+  const matrix = await sendHumanMatrixMessage(`${prefix}${buildJitswChatPrompt(text, threadId, threadTitle)}`);
   return json({ ok: true, matrix });
 }
 
