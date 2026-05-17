@@ -1,0 +1,118 @@
+/**
+ * TikTok-style snap-scroll feed.
+ *
+ * Each card fills the viewport. Vertical swipe snaps from card to card. On
+ * desktop the same component works as a scroll list; the snap behavior just
+ * feels right on phones.
+ */
+
+.feed {
+  height: 100dvh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  background: var(--paper);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.feed::-webkit-scrollbar {
+  display: none;
+}
+
+.feed__card {
+  height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.feed__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+  padding-bottom: 8px;
+}
+
+.feed__agent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feed__agent::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5b8d3e;
+}
+
+.feed__kind {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--paper-hairline);
+  text-transform: lowercase;
+}
+
+.feed__title {
+  margin: 4px 0 6px;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.feed__summary {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.feed__surface {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--paper-hairline);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  padding: 16px;
+  min-height: 0;
+}
+
+.feed__pager {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.feed__pager-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--paper-muted);
+  opacity: 0.4;
+}
+
+.feed__pager-dot[data-active='true'] {
+  opacity: 1;
+  background: var(--ink);
+}

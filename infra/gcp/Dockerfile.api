@@ -1,0 +1,49 @@
+# Multi-stage build for the JITSW API.
+#
+# Builds:
+#   1. install all workspace deps (with dev) and build TypeScript
+#   2. install production-only deps in a slim layer
+#   3. copy compiled JS + prod node_modules into a distroless runtime
+#
+# Resulting image is ~150 MB and runs as nonroot. Cloud Run friendly.
+
+# ---- deps & build ----------------------------------------------------------
+FROM node:20-bookworm-slim AS build
+WORKDIR /app
+
+# Copy manifests first so npm cache is reused when source changes.
+COPY package.json package-lock.json ./
+COPY tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/sdk/package.json ./packages/sdk/
+COPY packages/plugin-openclaw/package.json ./packages/plugin-openclaw/
+
+# Install full deps (we need tsc + drizzle types to build).
+RUN npm ci --include=optional
+
+# Copy sources and build the api package + its dependencies.
+COPY packages ./packages
+COPY apps/api ./apps/api
+RUN npm run build --workspace packages/shared --if-present \
+ && npm run build --workspace packages/sdk     --if-present \
+ && npm run build --workspace apps/api
+
+# Prune to production-only for the runtime image.
+RUN npm prune --production --include=optional
+
+# ---- runtime ---------------------------------------------------------------
+FROM gcr.io/distroless/nodejs20-debian12:nonroot AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy built artifacts and pruned modules.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+COPY --from=build /app/apps/api/migrations ./apps/api/migrations
+COPY --from=build /app/packages ./packages
+
+EXPOSE 8787
+CMD ["apps/api/dist/server.js"]

@@ -1,0 +1,50 @@
+/* JITSW global styles. Calm, paper-like, mobile-first. */
+
+:root {
+  /* Warm off-white "paper" — feels intentional, not just white. */
+  --paper: #FDFDFC;
+  /* Slightly darker — the "build something" placeholder color. */
+  --paper-muted: #B8B6AE;
+  /* Even fainter, for hairlines and dividers. */
+  --paper-hairline: #EEEDE8;
+  /* Ink — primary text. */
+  --ink: #1F1E1B;
+  --ink-soft: #4A4843;
+  /* Accent — used for primary actions. Anthropic-ish warm. */
+  --accent: #1F1E1B;
+  --accent-fg: #FDFDFC;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Tiempos', 'Charter', Georgia, 'Times New Roman', serif;
+  --font-mono:
+    ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}

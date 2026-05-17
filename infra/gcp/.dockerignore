@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.git
+.github
+**/.env
+**/.env.local
+*.log
+coverage
+**/coverage
+.vite
+.next
+infra/openclaw
+infra/ngrok
+matrix-local

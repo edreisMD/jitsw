@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openclaw.ai/schemas/plugin/2026-04.json",
+  "name": "jitsw",
+  "displayName": "JITSW",
+  "version": "0.0.1",
+  "description": "Mobile A2UI inbox for OpenClaw and GBrain agents.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/jitsw/jitsw",
+  "pluginType": "bundle-plugin",
+  "pluginApi": ">=2026.4.0",
+  "mcpServers": {
+    "jitsw": {
+      "command": "node",
+      "args": ["./dist/mcp.js"],
+      "env": {
+        "JITSW_BASE_URL": "${JITSW_BASE_URL:-https://api.jitsw.dev}"
+      }
+    }
+  },
+  "skills": [
+    "./skills/push-approval",
+    "./skills/push-generated-ui",
+    "./skills/wait-for-decision"
+  ],
+  "contracts": {
+    "channels": ["jitsw-mobile"]
+  }
+}

@@ -1,0 +1,51 @@
+# JITSW local dev infrastructure.
+#
+# Starts a Postgres for the API store and (optionally) a Synapse Matrix
+# homeserver if you don't already have the one in ../jitsw/matrix-local
+# running. The Synapse service is profile-gated so it doesn't conflict.
+#
+# Quick start:
+#   docker compose up -d postgres
+#   cp .env.example .env
+#   npm run db:migrate
+#   npm run dev
+#
+# To also run a self-contained Synapse:
+#   docker compose --profile matrix up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jitsw-postgres
+    restart: unless-stopped
+    ports:
+      # Mapped to 5433 to avoid clashing with a user's local Postgres on 5432.
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: jitsw
+      POSTGRES_PASSWORD: jitsw
+      POSTGRES_DB: jitsw
+    volumes:
+      - jitsw_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jitsw"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional. Use when you don't have an external Matrix homeserver.
+  synapse:
+    profiles: ["matrix"]
+    image: matrixdotorg/synapse:latest
+    container_name: jitsw-synapse-internal
+    restart: unless-stopped
+    ports:
+      - "8009:8008"
+    volumes:
+      - jitsw_synapse_data:/data
+    environment:
+      SYNAPSE_SERVER_NAME: jitsw.local
+      SYNAPSE_REPORT_STATS: "no"
+
+volumes:
+  jitsw_postgres_data:
+  jitsw_synapse_data:

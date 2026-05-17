@@ -1,0 +1,24 @@
+# ngrok config for the JITSW demo.
+#
+# Usage:
+#   ngrok start --config infra/ngrok/ngrok.yml --all
+#
+# This exposes the JITSW PWA (Vite dev) and the JITSW API behind one shared
+# ngrok session so a phone can reach both from any network. The PWA dev server
+# already proxies /api to the local API, so for a phone we expose the *web*
+# tunnel and the PWA does its own /api calls through that same origin.
+
+version: "3"
+agent:
+  authtoken: ${NGROK_AUTHTOKEN}
+
+tunnels:
+  jitsw-web:
+    proto: http
+    addr: 5173
+    # Comment out if you do not have a paid ngrok plan; remove if it errors.
+    # subdomain: jitsw-demo
+
+  jitsw-api:
+    proto: http
+    addr: 8787

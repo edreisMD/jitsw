@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: typecheck + test + build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: jitsw
+          POSTGRES_PASSWORD: jitsw
+          POSTGRES_DB: jitsw
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U jitsw"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Apply migrations (smoke)
+        env:
+          DATABASE_URL: postgres://jitsw:jitsw@localhost:5433/jitsw
+        run: npm run db:migrate --workspace apps/api
+
+      - name: Test
+        run: npm test --workspace apps/api
+
+      - name: Build PWA
+        run: npm run build --workspace apps/web
+
+      - name: Build plugin-openclaw
+        run: npm run build --workspace packages/plugin-openclaw

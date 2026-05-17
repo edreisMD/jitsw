@@ -1,0 +1,37 @@
+// JITSW Matrix channel config snippet for OpenClaw.
+//
+// Merge this into the `channels` section of `~/.openclaw/openclaw.json`.
+// Done by the setup script `scripts/wire-openclaw.sh`.
+//
+// `dangerouslyAllowPrivateNetwork: true` is required because Synapse runs on
+// localhost (OpenClaw blocks private homeservers by default for SSRF safety).
+//
+// `groups.<roomId>.systemPrompt` activates the jitsw-ui skill for that room
+// only — every other room continues to behave normally.
+{
+  matrix: {
+    enabled: true,
+    homeserver: "http://localhost:8008",
+    userId: "@openclaw-bot:localhost",
+    password: "jitsw-demo-bot",
+    deviceName: "JITSW Demo OpenClaw",
+    network: {
+      dangerouslyAllowPrivateNetwork: true,
+    },
+    encryption: false, // E2EE off for hackathon; turn on for real deployments
+    dm: { policy: "open" },
+    groupPolicy: "open",
+    autoJoin: "always",
+    streaming: "off",
+
+    // Per-room override: when the bot is in the JITSW demo room, load the
+    // jitsw-ui skill and require A2UI-only responses. The room ID is filled
+    // in by `scripts/wire-openclaw.sh` after the room is created.
+    groups: {
+      // "!<roomId>:localhost": {
+      //   systemPrompt: "You are GBrain - OpenClaw inside JITSW. This Matrix room is UI-only: do not answer with prose, markdown explanation, or normal chat text. Every response must be a complete A2UI v0.8 surface wrapped in com.jitsw.a2ui using the jitsw-ui skill. Use the Matrix body only as a short fallback for non-JITSW clients. JITSW ignores plain text and renders only complete UI packets.",
+      //   skills: ["jitsw-ui"],
+      // },
+    },
+  },
+}

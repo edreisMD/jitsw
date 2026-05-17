@@ -1,0 +1,109 @@
+.empty-state {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 36px;
+  background: var(--paper);
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+.empty-state__prompt {
+  margin: 0 0 28px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 9vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--paper-muted);
+  text-align: center;
+  user-select: none;
+}
+
+.empty-state__cta {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--accent-fg);
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.empty-state__cta:hover {
+  opacity: 0.92;
+}
+
+.empty-state__cta:active {
+  transform: scale(0.985);
+}
+
+.empty-state__hint {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.empty-state__hint a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--paper-hairline);
+  text-decoration-thickness: 1px;
+}
+
+.empty-state__commands {
+  margin-top: 40px;
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.empty-state__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state__group-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-muted);
+}
+
+.empty-state__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.empty-state__chip {
+  appearance: none;
+  background: #fff;
+  border: 1px solid var(--paper-hairline);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.empty-state__chip:hover {
+  background: var(--paper);
+}
+
+.empty-state__chip:active {
+  transform: scale(0.97);
+}
