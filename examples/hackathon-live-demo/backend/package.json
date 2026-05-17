@@ -1,0 +1,10 @@
+{
+  "name": "jitsw-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run server.ts",
+    "demo:gbrain-openclaw": "bash scripts/start-gbrain-openclaw-demo.sh"
+  },
+  "dependencies": {}
+}

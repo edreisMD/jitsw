@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>JITSW</title>
+  <style>
+    :root {
+      --paper: #FDFDFC;
+      --ink: #2f2d2a;
+      --ink-strong: #171717;
+      --muted: #8f8b86;
+      --muted-soft: #b8b4ae;
+      --line: #e9e7e3;
+      --line-strong: #dad8d3;
+      --selection: #e3e2df;
+      --selection-hover: #dbdad6;
+      --panel: #f7f6f3;
+      --panel-strong: #f1f0ed;
+      --blue: #3b96ea;
+      --blue-soft: #e9f3ff;
+      --gold: #a18422;
+      --green: #4c8b5a;
+      --red: #b85c4e;
+      --keyboard-offset: 0px;
+      color-scheme: light;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.35;
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .stage {
+      min-height: 100dvh;
+      background: var(--paper);
+      display: grid;
+      place-items: center;
+    }
+
+    .app {
+      width: min(100vw, 430px);
+      height: min(100dvh, 920px);
+      background: var(--paper);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .surface-scroll {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      scrollbar-width: none;
+      background: var(--paper);
+    }
+
+    .surface-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .surface {
+      min-height: 100%;
+      padding: max(22px, env(safe-area-inset-top)) 18px max(112px, calc(92px + env(safe-area-inset-bottom)));
+      display: grid;
+      align-content: stretch;
+    }
+
+    .empty {
+      min-height: calc(100dvh - 140px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      padding: 0 32px;
+    }
+
+    .empty-inner {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .empty-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .empty h1 {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 18px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    .empty p {
+      margin: 0;
+      max-width: 250px;
+      font-size: 14px;
+    }
+
+    .text-surface {
+      min-height: calc(100dvh - 132px);
+      display: grid;
+      align-content: center;
+      gap: 14px;
+      padding: 22px 2px;
+    }
+
+    .speaker {
+      display: inline-flex;
+      width: max-content;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .speaker-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .speaker-dot.human {
+      background: var(--gold);
+    }
+
+    .text-surface p {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 38px;
+      line-height: 1.02;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .a2ui-root {
+      min-height: calc(100dvh - 132px);
+      display: grid;
+      align-content: center;
+      gap: 12px;
+    }
+
+    .a2ui-column,
+    .a2ui-row {
+      display: grid;
+      gap: 12px;
+    }
+
+    .a2ui-row {
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      align-items: stretch;
+    }
+
+    .a2ui-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .a2ui-text {
+      margin: 0;
+      color: #4e4943;
+      font-size: 15px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .a2ui-text.h2 {
+      color: var(--ink-strong);
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 650;
+    }
+
+    .a2ui-text.caption {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .a2ui-button {
+      min-height: 48px;
+      border-radius: 8px;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--ink);
+      padding: 0 14px;
+      font-weight: 600;
+    }
+
+    .a2ui-button.primary {
+      background: var(--ink-strong);
+      border-color: var(--ink-strong);
+      color: var(--paper);
+    }
+
+    .a2ui-button:disabled {
+      cursor: wait;
+      opacity: 0.58;
+    }
+
+    .float-button {
+      position: absolute;
+      z-index: 7;
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(218, 216, 211, 0.82);
+      background: rgba(253, 253, 252, 0.88);
+      color: var(--ink-strong);
+      box-shadow: 0 10px 32px rgba(23, 23, 23, 0.10);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      overflow: visible;
+    }
+
+    .float-button:hover {
+      background: var(--paper);
+    }
+
+    .menu-button {
+      right: 14px;
+      top: max(14px, env(safe-area-inset-top));
+    }
+
+    .reply-button {
+      right: 16px;
+      bottom: max(18px, calc(16px + env(safe-area-inset-bottom)));
+    }
+
+    .bell-icon {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .alert-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 2px solid var(--paper);
+      background: var(--blue);
+      color: var(--paper);
+      display: grid;
+      place-items: center;
+      padding: 0 5px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .alert-badge[hidden] {
+      display: none;
+    }
+
+    .reply-mark {
+      width: 21px;
+      height: 18px;
+      position: relative;
+    }
+
+    .reply-mark::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 2px solid currentColor;
+      border-radius: 6px;
+    }
+
+    .reply-mark::after {
+      content: "";
+      position: absolute;
+      right: 3px;
+      bottom: -4px;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      background: var(--paper);
+    }
+
+    .drawer-backdrop,
+    .composer-backdrop,
+    .decision-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(30, 30, 30, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+
+    .drawer-backdrop {
+      z-index: 8;
+    }
+
+    .composer-backdrop {
+      z-index: 10;
+    }
+
+    .decision-backdrop {
+      z-index: 11;
+    }
+
+    .drawer-backdrop.open,
+    .composer-backdrop.open,
+    .decision-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: min(84vw, 326px);
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+      transform: translateX(-104%);
+      transition: transform 180ms ease;
+      z-index: 9;
+      padding: max(24px, env(safe-area-inset-top)) 14px 18px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 4px;
+    }
+
+    .drawer-title {
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 400;
+    }
+
+    .close-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #6c6862;
+      font-size: 22px;
+    }
+
+    .close-button:hover {
+      background: var(--panel-strong);
+    }
+
+    .history {
+      display: grid;
+      gap: 4px;
+      align-content: start;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .history::-webkit-scrollbar {
+      display: none;
+    }
+
+    .history-item {
+      min-height: 56px;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px;
+      text-align: left;
+    }
+
+    .history-item.active,
+    .history-item:hover {
+      background: var(--selection);
+    }
+
+    .history-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .history-dot.human {
+      background: var(--gold);
+    }
+
+    .history-copy {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .history-title {
+      color: var(--ink-strong);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 15px;
+    }
+
+    .history-meta {
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+    }
+
+    .composer-sheet {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: max(14px, calc(12px + env(safe-area-inset-bottom) + var(--keyboard-offset)));
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      box-shadow: 0 18px 48px rgba(23, 23, 23, 0.16);
+      transform: translateY(calc(100% + 28px));
+      transition: transform 180ms ease;
+      z-index: 11;
+      padding: 8px;
+      display: grid;
+    }
+
+    .composer-sheet.open {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 38px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--line-strong);
+      justify-self: center;
+      margin: 0 0 6px;
+    }
+
+    .composer-form {
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px;
+      align-items: center;
+      padding: 2px 2px 2px 9px;
+      background: var(--paper);
+    }
+
+    .composer-form input {
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .composer-form input::placeholder {
+      color: var(--muted-soft);
+    }
+
+    .send {
+      width: 38px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--selection);
+      color: var(--ink-strong);
+      font-weight: 600;
+    }
+
+    .send:hover {
+      background: var(--selection-hover);
+    }
+
+    .decision-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--paper);
+      border-top: 1px solid var(--line);
+      transform: translateY(104%);
+      transition: transform 180ms ease;
+      z-index: 12;
+      padding: 10px 14px max(18px, calc(16px + env(safe-area-inset-bottom)));
+      display: grid;
+      gap: 10px;
+    }
+
+    .decision-sheet.open {
+      transform: translateY(0);
+    }
+
+    .decision-sheet h2 {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .decision-sheet p {
+      margin: 0 0 2px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .action {
+      min-height: 44px;
+      border-radius: 8px;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .action:hover {
+      background: var(--selection);
+    }
+
+    .action.primary {
+      background: var(--ink-strong);
+      border-color: var(--ink-strong);
+      color: var(--paper);
+      font-weight: 600;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: max(78px, calc(68px + env(safe-area-inset-bottom)));
+      transform: translateX(-50%) translateY(16px);
+      opacity: 0;
+      pointer-events: none;
+      min-height: 36px;
+      border-radius: 8px;
+      background: var(--ink-strong);
+      color: var(--paper);
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      transition: opacity 150ms ease, transform 150ms ease;
+      z-index: 13;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .auth-gate {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: var(--paper);
+      display: none;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .auth-gate.open {
+      display: grid;
+    }
+
+    .auth-panel {
+      width: min(100%, 320px);
+      display: grid;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .auth-panel h2 {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .auth-panel p {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 430px) {
+      .stage {
+        display: block;
+      }
+
+      .app {
+        width: 100vw;
+        height: 100dvh;
+        border-left: 0;
+        border-right: 0;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .text-surface p {
+        font-size: 34px;
+      }
+
+      .a2ui-text.h2 {
+        font-size: 35px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <main class="app" aria-label="JITSW">
+      <div class="surface-scroll" id="surfaceScroll">
+        <section class="surface" id="surface" aria-live="polite"></section>
+      </div>
+
+      <button class="float-button menu-button" id="openDrawer" aria-label="Open AI alerts">
+        <svg class="bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.27 21a2 2 0 0 0 3.46 0" />
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        </svg>
+        <span class="alert-badge" id="alertBadge" hidden>0</span>
+      </button>
+
+      <button class="float-button reply-button" id="openComposer" aria-label="Reply">
+        <span class="reply-mark"></span>
+      </button>
+
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+      <aside class="drawer" id="drawer" aria-label="History">
+        <div class="drawer-head">
+          <div class="drawer-title">Recents</div>
+          <button class="close-button" id="closeDrawer" aria-label="Close history">x</button>
+        </div>
+        <div class="history" id="history"></div>
+      </aside>
+
+      <div class="composer-backdrop" id="composerBackdrop"></div>
+      <section class="composer-sheet" id="composerSheet" aria-label="Reply">
+        <div class="sheet-handle"></div>
+        <form class="composer-form" id="composerForm">
+          <input id="composerInput" aria-label="Message" placeholder="Reply to GBrain - OpenClaw" autocomplete="off" />
+          <button class="send" type="submit" aria-label="Send">Go</button>
+        </form>
+      </section>
+
+      <div class="decision-backdrop" id="decisionBackdrop"></div>
+      <section class="decision-sheet" id="decisionSheet" aria-label="Decision actions">
+        <div class="sheet-handle"></div>
+        <h2>Review request</h2>
+        <p>Submit to Matrix and save to GBrain when project memory is configured.</p>
+        <button class="action primary" data-decision="approved">Approve</button>
+        <button class="action" data-decision="changes">Request changes</button>
+        <button class="action" data-decision="rejected">Reject</button>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <section class="auth-gate" id="authGate" aria-label="Sign in">
+        <div class="auth-panel">
+          <h2>JITSW</h2>
+          <p>Sign in with Google to review agent work.</p>
+          <button class="action primary" id="signInButton">Sign in with Google</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const apiBase = window.localStorage.getItem("jitswApiBase") || (location.protocol === "file:" ? "http://localhost:4188" : "");
+    let authToken = "";
+    let firebaseAuth = null;
+    let firebaseProvider = null;
+    let selectedEventId = "";
+    let pinnedSelection = false;
+    let latestMessages = [];
+
+    const drawer = document.getElementById("drawer");
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+    const composerBackdrop = document.getElementById("composerBackdrop");
+    const composerSheet = document.getElementById("composerSheet");
+    const composerInput = document.getElementById("composerInput");
+    const decisionBackdrop = document.getElementById("decisionBackdrop");
+    const decisionSheet = document.getElementById("decisionSheet");
+    const toast = document.getElementById("toast");
+    const surface = document.getElementById("surface");
+    const history = document.getElementById("history");
+    const alertBadge = document.getElementById("alertBadge");
+    const authGate = document.getElementById("authGate");
+
+    const decisionReasons = {
+      approved: "Approved.",
+      rejected: "Rejected.",
+      changes: "Request changes."
+    };
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    function setDrawer(open) {
+      drawer.classList.toggle("open", open);
+      drawerBackdrop.classList.toggle("open", open);
+    }
+
+    function setComposer(open) {
+      if (open) setDecisionSheet(false);
+      composerSheet.classList.toggle("open", open);
+      composerBackdrop.classList.toggle("open", open);
+      if (open) {
+        syncKeyboardOffset();
+        window.requestAnimationFrame(() => composerInput.focus({ preventScroll: true }));
+      } else {
+        document.documentElement.style.setProperty("--keyboard-offset", "0px");
+      }
+    }
+
+    function setDecisionSheet(open) {
+      if (open) setComposer(false);
+      decisionSheet.classList.toggle("open", open);
+      decisionBackdrop.classList.toggle("open", open);
+    }
+
+    function syncKeyboardOffset() {
+      const viewport = window.visualViewport;
+      if (!viewport || !composerSheet.classList.contains("open")) return;
+      const offset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      document.documentElement.style.setProperty("--keyboard-offset", `${Math.round(offset)}px`);
+    }
+
+    function textFrom(component) {
+      if (typeof component.text === "string") return component.text;
+      if (component.text?.literalString) return component.text.literalString;
+      return "";
+    }
+
+    function actionToDecision(action) {
+      const name = typeof action === "string"
+        ? action
+        : action?.event?.name || action?.name || "";
+      if (name.includes("approve")) return "approved";
+      if (name.includes("request_changes")) return "changes";
+      if (name.includes("reject")) return "rejected";
+      return "";
+    }
+
+    function senderMeta(sender) {
+      if ((sender || "").includes("openclaw")) return { name: "GBrain - OpenClaw", initials: "G", agent: true };
+      if ((sender || "").includes("jitsw-human") || (sender || "").includes("eduardo")) return { name: "Eduardo", initials: "E", agent: false };
+      return { name: "Agent", initials: "A", agent: true };
+    }
+
+    function cleanMessageBody(body, hasA2ui) {
+      const withoutJson = (body || "").replace(/```(?:json|a2ui)?[\s\S]*?```/gi, "").trim();
+      const cleaned = withoutJson.replace(/^\*\s*/, "").trim();
+      if (cleaned) return cleaned;
+      return hasA2ui ? "Sent an interactive surface." : "";
+    }
+
+    function nodeForText(item) {
+      const meta = senderMeta(item?.sender);
+      const text = cleanMessageBody(item?.body, !!item?.a2ui);
+      const wrapper = document.createElement("article");
+      wrapper.className = "text-surface";
+      wrapper.innerHTML = `
+        <div class="speaker">
+          <span class="speaker-dot ${meta.agent ? "" : "human"}"></span>
+          <span></span>
+        </div>
+        <p></p>
+      `;
+      wrapper.querySelector(".speaker span:last-child").textContent = meta.name;
+      wrapper.querySelector("p").textContent = text || "Waiting for a message.";
+      return wrapper;
+    }
+
+    function renderA2uiTree(item) {
+      if (!item || typeof item !== "object") return document.createTextNode("");
+      const props = item.props || {};
+      const type = item.type || item.component;
+
+      if (type === "Column" || type === "Row") {
+        const node = document.createElement("div");
+        node.className = type === "Row" ? "a2ui-row" : "a2ui-column";
+        const children = Array.isArray(item.children) ? item.children : [];
+        for (const child of children) node.appendChild(renderA2uiTree(child));
+        return node;
+      }
+
+      if (type === "Card") {
+        const node = document.createElement("div");
+        node.className = "a2ui-card";
+        const children = Array.isArray(item.children) ? item.children : [];
+        for (const child of children) node.appendChild(renderA2uiTree(child));
+        return node;
+      }
+
+      if (type === "Button") {
+        const node = document.createElement("button");
+        const label = props.label || props.text || item.label || item.text || "Continue";
+        const decision = actionToDecision(props.action || item.action || label.toLowerCase());
+        node.className = `a2ui-button ${decision === "approved" ? "primary" : ""}`;
+        node.textContent = label;
+        node.addEventListener("click", () => decision ? submitDecision(decision) : setDecisionSheet(true));
+        return node;
+      }
+
+      const node = document.createElement("p");
+      const isHeading = props.size === "lg" || props.weight === "bold" || item.variant === "h2" || props.variant === "h2";
+      const isCaption = item.variant === "caption" || props.variant === "caption";
+      node.className = `a2ui-text ${isHeading ? "h2" : ""} ${isCaption ? "caption" : ""}`;
+      node.textContent = props.text || item.text || "";
+      return node;
+    }
+
+    function renderA2ui(payload) {
+      const tree = payload?.surface || (payload?.type ? payload : null);
+      const root = document.createElement("div");
+      root.className = "a2ui-root";
+
+      if (tree) {
+        root.appendChild(renderA2uiTree(tree));
+        return root;
+      }
+
+      const messages = Array.isArray(payload) ? payload : [payload];
+      const components = new Map();
+      for (const message of messages) {
+        const next = message?.updateComponents?.components || message?.surfaceUpdate?.components || [];
+        for (const item of next) {
+          const component = typeof item.component === "string"
+            ? item
+            : { id: item.id, ...(Object.entries(item.component || {})[0]?.[1] || {}), component: Object.keys(item.component || {})[0] };
+          components.set(item.id, component);
+        }
+      }
+
+      const renderNode = (id) => {
+        const component = components.get(id);
+        if (!component) return document.createTextNode("");
+
+        if (component.component === "Column" || component.component === "Row") {
+          const node = document.createElement("div");
+          node.className = component.component === "Row" ? "a2ui-row" : "a2ui-column";
+          const children = Array.isArray(component.children) ? component.children : component.children?.explicitList || [];
+          for (const child of children) node.appendChild(renderNode(child));
+          return node;
+        }
+
+        if (component.component === "Card") {
+          const node = document.createElement("div");
+          node.className = "a2ui-card";
+          node.appendChild(renderNode(component.child));
+          return node;
+        }
+
+        if (component.component === "Button") {
+          const node = document.createElement("button");
+          node.className = `a2ui-button ${component.variant === "primary" ? "primary" : ""}`;
+          node.textContent = component.text || "Continue";
+          node.addEventListener("click", () => {
+            const action = component.action?.event?.name || component.action?.name || "";
+            if (action.includes("approve")) submitDecision("approved");
+            else if (action.includes("request_changes")) submitDecision("changes");
+            else if (action.includes("reject")) submitDecision("rejected");
+            else setDecisionSheet(true);
+          });
+          return node;
+        }
+
+        const node = document.createElement("p");
+        node.className = `a2ui-text ${component.variant || component.usageHint || ""}`;
+        node.textContent = textFrom(component);
+        return node;
+      };
+
+      root.appendChild(renderNode("root"));
+      return root;
+    }
+
+    function renderEmpty() {
+      surface.replaceChildren();
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = `
+        <div class="empty-inner">
+          <span class="empty-dot"></span>
+          <h1>Waiting for GBrain - OpenClaw</h1>
+          <p>Messages and generated UI will appear here when they arrive through Matrix.</p>
+        </div>
+      `;
+      surface.appendChild(empty);
+    }
+
+    function renderSurface(item) {
+      surface.replaceChildren();
+      if (!item?.a2ui) {
+        renderEmpty();
+        return;
+      }
+      surface.appendChild(renderA2ui(item.a2ui));
+    }
+
+    function messageTitle(item) {
+      const body = cleanMessageBody(item.body, !!item.a2ui);
+      if (item.a2ui && body === "Sent an interactive surface.") return "Interactive surface";
+      return body || "Message";
+    }
+
+    function renderHistory(messages) {
+      const visible = (messages || []).filter((item) => item.a2ui);
+      const alertCount = visible.length;
+      alertBadge.hidden = alertCount === 0;
+      alertBadge.textContent = alertCount > 9 ? "9+" : String(alertCount);
+      history.replaceChildren(...visible.map((item) => {
+        const meta = senderMeta(item.sender);
+        const button = document.createElement("button");
+        button.className = `history-item ${item.event_id === selectedEventId ? "active" : ""}`;
+        button.innerHTML = `
+          <span class="history-dot ${meta.agent ? "" : "human"}"></span>
+          <span class="history-copy">
+            <span class="history-title"></span>
+            <span class="history-meta"></span>
+          </span>
+        `;
+        const time = item.origin_server_ts
+          ? new Date(item.origin_server_ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+          : "now";
+        button.querySelector(".history-title").textContent = messageTitle(item);
+        button.querySelector(".history-meta").textContent = `${meta.name} · ${time}`;
+        button.addEventListener("click", () => {
+          selectedEventId = item.event_id;
+          pinnedSelection = true;
+          renderSurface(item);
+          renderHistory(latestMessages);
+          setDrawer(false);
+        });
+        return button;
+      }));
+    }
+
+    async function refreshMatrixTimeline() {
+      const timeline = await api("/api/messages");
+      latestMessages = timeline.messages || [];
+      const visible = latestMessages.filter((item) => item.a2ui);
+      const newestAgentSurface = visible[0];
+      const pinned = pinnedSelection ? visible.find((item) => item.event_id === selectedEventId) : null;
+      const selected = pinned || newestAgentSurface || visible[0] || null;
+      selectedEventId = selected?.event_id || "";
+      renderSurface(selected);
+      renderHistory(visible);
+      return timeline;
+    }
+
+    async function sendChatMessage(text) {
+      setComposer(false);
+      pinnedSelection = false;
+      showToast("Sending");
+      try {
+        await api("/api/chat", {
+          method: "POST",
+          body: JSON.stringify({ message: text })
+        });
+        showToast("Submitted to Matrix / saved to GBrain");
+        pollMatrixTimeline();
+      } catch {
+        showToast("Backend unavailable");
+      }
+    }
+
+    async function pollMatrixTimeline(iterations = 12) {
+      for (let index = 0; index < iterations; index += 1) {
+        try {
+          await refreshMatrixTimeline();
+        } catch {
+          if (!latestMessages.length) renderEmpty();
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 4000));
+      }
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(`${apiBase}${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          ...(options.headers || {})
+        }
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.message || body.error || "Request failed");
+      }
+      return body;
+    }
+
+    async function configureAuth() {
+      const config = await api("/api/config").catch(() => null);
+      if (!config?.auth?.required) {
+        authGate.classList.remove("open");
+        return;
+      }
+
+      if (!config.auth.firebase) {
+        authGate.classList.add("open");
+        return;
+      }
+
+      const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js")
+      ]);
+      const app = initializeApp(config.auth.firebase);
+      firebaseAuth = getAuth(app);
+      firebaseProvider = new GoogleAuthProvider();
+
+      document.getElementById("signInButton").addEventListener("click", () => signInWithPopup(firebaseAuth, firebaseProvider));
+      onAuthStateChanged(firebaseAuth, async (user) => {
+        if (!user) {
+          authToken = "";
+          authGate.classList.add("open");
+          return;
+        }
+        authToken = await user.getIdToken();
+        authGate.classList.remove("open");
+        await refreshMatrixTimeline();
+      });
+    }
+
+    async function submitDecision(decision) {
+      const reason = decisionReasons[decision];
+      setDecisionSheet(false);
+      document.querySelectorAll("[data-decision], .a2ui-button").forEach((el) => el.disabled = true);
+      showToast("Submitting to Matrix / GBrain");
+      try {
+        const selected = latestMessages.find((item) => item.event_id === selectedEventId);
+        await api("/api/approvals", {
+          method: "POST",
+          body: JSON.stringify({
+            decision,
+            title: messageTitle(selected || {}),
+            reason,
+            agent: "openclaw",
+            channel: "matrix"
+          })
+        });
+        showToast("Submitted to Matrix / saved to GBrain");
+        await refreshMatrixTimeline();
+      } catch {
+        showToast("Could not save");
+      } finally {
+        document.querySelectorAll("[data-decision], .a2ui-button").forEach((el) => el.disabled = false);
+      }
+    }
+
+    document.getElementById("openDrawer").addEventListener("click", () => setDrawer(true));
+    document.getElementById("closeDrawer").addEventListener("click", () => setDrawer(false));
+    drawerBackdrop.addEventListener("click", () => setDrawer(false));
+    document.getElementById("openComposer").addEventListener("click", () => setComposer(true));
+    composerBackdrop.addEventListener("click", () => setComposer(false));
+    decisionBackdrop.addEventListener("click", () => setDecisionSheet(false));
+    window.visualViewport?.addEventListener("resize", syncKeyboardOffset);
+    window.visualViewport?.addEventListener("scroll", syncKeyboardOffset);
+
+    document.querySelectorAll("[data-decision]").forEach((button) => {
+      button.addEventListener("click", () => submitDecision(button.dataset.decision));
+    });
+
+    document.getElementById("composerForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = composerInput.value.trim();
+      if (!text) return;
+      sendChatMessage(text);
+      composerInput.value = "";
+    });
+
+    renderEmpty();
+    configureAuth().finally(() => {
+      refreshMatrixTimeline().catch(() => renderEmpty());
+      window.setInterval(() => refreshMatrixTimeline().catch(() => {}), 5000);
+    });
+  </script>
+</body>
+</html>

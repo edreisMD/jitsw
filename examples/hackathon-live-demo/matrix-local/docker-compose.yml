@@ -1,0 +1,12 @@
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: jitsw-synapse
+    restart: unless-stopped
+    ports:
+      - "8008:8008"
+    volumes:
+      - ./synapse-data:/data
+    environment:
+      SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
+

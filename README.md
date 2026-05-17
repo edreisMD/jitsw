@@ -42,6 +42,7 @@ packages/sdk                Agent-side HTTP SDK
 packages/plugin-openclaw    MCP server + OpenClaw plugin manifest
 infra/openclaw/jitsw-ui     OpenClaw skill: always respond with A2UI
 scripts/wire-openclaw.sh    Local Matrix + OpenClaw wiring script
+examples/hackathon-live-demo Exact Bun + ngrok prototype used for the video
 infra/gcp                   Cloud Run / Cloud SQL deployment scripts
 ```
 
@@ -80,6 +81,19 @@ You should see a full-screen generated UI card in the PWA.
 ## Matrix + GBrain + OpenClaw Demo
 
 This is the hackathon path.
+
+If you want the exact lightweight prototype used in the recorded demo, run:
+
+```bash
+cd examples/hackathon-live-demo/backend
+bun run demo:gbrain-openclaw
+```
+
+Then open `https://jitsw.ngrok.io/?v=demo` and watch:
+
+```bash
+openclaw tui --agent main --session 'matrix:direct:@jitsw-human:localhost'
+```
 
 1. Start a Matrix homeserver.
 

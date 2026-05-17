@@ -11,3 +11,6 @@ build
 coverage
 .turbo
 *.tsbuildinfo
+examples/hackathon-live-demo/backend/.run/
+examples/hackathon-live-demo/backend/.jitsw-state.json
+examples/hackathon-live-demo/matrix-local/synapse-data/
