@@ -1,7 +1,5 @@
 # JITSW
 
-**Demo video:** [Watch the hackathon demo](https://www.loom.com/share/4f73e2efcedf4749993deda4380678a8)
-
 **Just-in-Time Software for GBrain + OpenClaw.**
 
 JITSW is a mobile-first communication layer for AI-native teams. Instead of agents sending long chat replies into Slack, Discord, or Telegram, agents send complete A2UI surfaces that render as full-screen phone UI: approvals, generated interfaces, alerts, questions, and status cards.
